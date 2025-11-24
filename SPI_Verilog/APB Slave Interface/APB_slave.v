@@ -57,12 +57,6 @@ module APB_slave(pclk,preset_n,paddr,pwrite,psel,penable,pwdata,ss,miso_data,rec
 	
 	assign wr_en=(pwrite&&(ps==enable))?1:0;
 	assign rd_en=(!pwrite&&(ps==enable))?1:0;
-
-	
-
-	// registers bit ?
-
-	//mask?
 	
 	always @(*)             // modf(detect mode fault)
 	begin
