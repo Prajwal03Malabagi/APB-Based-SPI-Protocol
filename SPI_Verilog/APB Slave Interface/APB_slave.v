@@ -12,7 +12,7 @@ module APB_slave(pclk,preset_n,paddr,pwrite,psel,penable,pwdata,ss,miso_data,rec
 	output [2:0]sppr,spr;
 	output reg[7:0]prdata;
 
-	reg [1:0]ns,ps; //APB states
+	reg [1:0]nss,pss; //APB states
 	reg [1:0]nmode; //SPI mode States
 
 	parameter idle=2'b00,setup=2'b01,enable=2'b10; //For APB
@@ -51,12 +51,18 @@ module APB_slave(pclk,preset_n,paddr,pwrite,psel,penable,pwdata,ss,miso_data,rec
 	assign sppr=spi_br[6:4];  // spi_br bit mapping
 	assign spr=spi_br[2:0];
 
-	assign spif=(spi_dr=8'b0)?1:0; //spi_sr bit mapping
-	assign sptef=(spi_dr=8'b0)?1:0;
+	assign spif=(spi_dr==8'b0)?1:0; //spi_sr bit mapping
+	assign sptef=(spi_dr==8'b0)?1:0;
 
 	
-	assign wr_en=(pwrite&&(ps==enable))?1:0;
-	assign rd_en=(!pwrite&&(ps==enable))?1:0;
+	assign wr_en=(pwrite&&(pss==enable))?1:0;
+	assign rd_en=(!pwrite&&(pss==enable))?1:0;
+
+	
+
+	// registers bit ?
+
+	//mask?
 	
 	always @(*)             // modf(detect mode fault)
 	begin
@@ -82,8 +88,8 @@ module APB_slave(pclk,preset_n,paddr,pwrite,psel,penable,pwdata,ss,miso_data,rec
 
 	
 
-	assign pready=(ps==enable)?1:0;  // For Pready
-	assign pslverr=(ps==enable)?~tip:1'b0;  //For Slave error
+	assign pready=(pss==enable)?1:0;  // For Pready
+	assign pslverr=(pss==enable)?~tip:1'b0;  //For Slave error
 	assign spi_sr=(!preset_n)?8'b00100000:{spif,1'b0,sptef,modf,4'b0}; // For SPI_SR
 
 
@@ -99,54 +105,55 @@ module APB_slave(pclk,preset_n,paddr,pwrite,psel,penable,pwdata,ss,miso_data,rec
 	always @(*)    // spi_mode fsm (combo logic) next state
 	begin
 		nmode=run;
-		case(ps)
+		case(spi_mode)
 			run:if(!spe) nmode=spi_wait;
 				else nmode=run;
-			spi_wait:if(!spiswai && !spe ) ns=spi_wait;
+			spi_wait:if(!spiswai && !spe ) nmode=spi_wait;
 				else if(spiswai) nmode=stop;
-				else nmode=run;
-			stop:if(!spiswai)nmode=spi_wait;
 				else if(spe) nmode=run;
 				else nmode=stop;
+			//default:nmode=run;
+				
 		endcase
 	end
 
 	always @(posedge pclk)  //APB fsm(sequential logic) present state
 	begin
 		if(!preset_n)
-			ps<=idle;
+			pss<=idle;
 		else 
-			ps<=ns;
+			pss<=nss;
 	end
 
 	always @(*) begin //APB fsm(combo logic ) next state
-		ns=idle;
-		case(ps)
-			idle:if(psel &&!penable) ns=setup;
-				else ns=idle;
-			setup:if(psel && penable) ns=enable;
+		nss=idle;
+		case(pss)
+			idle:begin if(psel &&!penable) nss=setup;
+				else nss=idle;end
+			setup:begin if(psel && penable) nss=enable;
 				else if(!psel)
-					ns=idle;
-				else ns= setup;
-			enable:if(psel) ns=setup;
-					else ns=idle;
+					nss=idle;
+				else nss= setup;end
+			enable:begin if(psel) nss=setup;
+					else nss=idle;end
 		endcase
 	end
 
 	always@(*)begin  //Read for ALL Regiser 
-		if(!preset_n)
 			prdata=8'b0;
-		else if(rd_en)
+		 if(rd_en)begin
 			case(paddr)
 				3'b000:prdata=spi_cr1;
 				3'b001:prdata=spi_cr2;
 				3'b010:prdata=spi_br;
 				3'b011:prdata=spi_sr;
+				3'b100:prdata=8'b00000000;
 				3'b101:prdata=spi_dr;
-				default:prdata=8'b0;
-			endcase
-		else
-			prdata=prdata;
+				3'b110:prdata=8'b00000000;
+				3'b111:prdata=8'b00000000;
+				//default:prdata=8'b00000000;
+			endcase end
+		
 		end
 
 	always @(posedge pclk)        // For Write in control Register 1
@@ -236,7 +243,7 @@ module APB_slave(pclk,preset_n,paddr,pwrite,psel,penable,pwdata,ss,miso_data,rec
 		else
 		begin
 		
-				if(!wr_en&&(spi_dr==pwdata && (spi_dr!=miso_data) &&(spi_mode==run || spi_mode==spi_wait)))
+				if((spi_dr==pwdata && (spi_dr!=miso_data) &&(spi_mode==run || spi_mode==spi_wait)))
 					send_data<=1;
 				else
 				begin
@@ -280,5 +287,8 @@ module APB_slave(pclk,preset_n,paddr,pwrite,psel,penable,pwdata,ss,miso_data,rec
 
 			
 			
+
+
+
 
 
