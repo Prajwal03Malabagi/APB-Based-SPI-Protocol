@@ -10,7 +10,7 @@ module shift_register(pclk,preset_n,ss,send_data,lsbfe,cpha,cpol,miso_recieve_sc
 	
 	assign data_miso=(recieve_data)?temp_reg:8'd0;
 
-	always @(posedge pclk,negedge preset_n)
+	always @(posedge pclk)
 	begin
 		if(!preset_n)
 			shift_register<=0;
