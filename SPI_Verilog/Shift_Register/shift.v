@@ -20,12 +20,13 @@ module shift_register(pclk,preset_n,ss,send_data,lsbfe,cpha,cpol,miso_recieve_sc
 			shift_register<=shift_register;
 	end
 	
+	
 
-	always @(posedge pclk,negedge preset_n) //Receive miso
+	always @(posedge pclk) //Receive miso
 	begin
 		if(!preset_n)
 			begin
-				mosi<=1'b0;
+				//mosi<=1'b0;   due to sim_race commented
 				count2<=3'b0;
 				count3<=3'd7;
 			end
@@ -100,7 +101,7 @@ module shift_register(pclk,preset_n,ss,send_data,lsbfe,cpha,cpol,miso_recieve_sc
 			end
 		end
 		
-		always @(posedge pclk,negedge preset_n) //Transmit mosi
+		always @(posedge pclk) //Transmit mosi
 	begin
 		if(!preset_n)
 			begin
@@ -131,7 +132,7 @@ module shift_register(pclk,preset_n,ss,send_data,lsbfe,cpha,cpol,miso_recieve_sc
 									end
 								else
 									begin
-										if(count>=3'd0)
+										if(count1>=3'd0)
 											begin
 												if(mosi_send_sclk)
 													begin
@@ -139,10 +140,10 @@ module shift_register(pclk,preset_n,ss,send_data,lsbfe,cpha,cpol,miso_recieve_sc
 														count1<=count1-1;
 													end
 												else 
-													count2<=count2;
+													count1<=count1;
 											end
 										else
-											count2<=3'd7;
+											count1<=3'd7;
 									end
 							end	
 						else
@@ -180,12 +181,4 @@ module shift_register(pclk,preset_n,ss,send_data,lsbfe,cpha,cpol,miso_recieve_sc
 		end
 		
 	endmodule
-	
-
-	
-
-
-	
-
-						
 
