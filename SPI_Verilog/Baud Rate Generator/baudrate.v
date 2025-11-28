@@ -6,7 +6,7 @@ module baud_rate(Pclk,PRESET_n,spi_mode,spiswai,sppr,spr,cpol,cpha,ss,sclk,miso_
 	output reg sclk,miso_recieve_sclk,miso_recieve_sclk0,mosi_send_sclk,mosi_send_sclk0;
 	output [11:0] BaudRateDivisor;
 
-	wire pre_sclk;
+	wire pre_clk;
 	reg [11:0] count;
 
 	assign BaudRateDivisor=(sppr+1)*(2**(spr+1)); // Baud Rate Divisor
@@ -14,11 +14,10 @@ module baud_rate(Pclk,PRESET_n,spi_mode,spiswai,sppr,spr,cpol,cpha,ss,sclk,miso_
 
 	//Pre clk
 
-	always @(posedge Pclk or negedge PRESET_n)   // Generate Serial Clk for SPI
+	always @(posedge Pclk)   // Generate Serial Clk for SPI
 	begin
 		if(!PRESET_n)
 		begin
-			count<=0;
 			sclk<=pre_clk;
 		end
 		else if(!ss && (spi_mode==2'b00||spi_mode==2'b01) && !spiswai)
@@ -32,7 +31,7 @@ module baud_rate(Pclk,PRESET_n,spi_mode,spiswai,sppr,spr,cpol,cpha,ss,sclk,miso_
 			sclk<=pre_clk;
 	end
 
-	always @(posedge Pclk or negedge PRESET_n)   //For MISO 
+	always @(posedge Pclk)   //For MISO 
 	begin
 		if(!PRESET_n)
 		begin
@@ -67,7 +66,7 @@ module baud_rate(Pclk,PRESET_n,spi_mode,spiswai,sppr,spr,cpol,cpha,ss,sclk,miso_
 		end
 	end
 		
-	always @(posedge Pclk or negedge PRESET_n)   //For MOSI
+	always @(posedge Pclk )   //For MOSI
 		begin
 			if(!PRESET_n)
 			begin
@@ -97,20 +96,23 @@ module baud_rate(Pclk,PRESET_n,spi_mode,spiswai,sppr,spr,cpol,cpha,ss,sclk,miso_
 		end
 		end
 		
-		always@(posedge Pclk or negedge PRESET_n)
+		always@(posedge Pclk )
 		begin
 			if(!PRESET_n)
 				count<=12'b0;
 			else if(!ss && (spi_mode==2'b00||spi_mode==2'b01) && !spiswai)
 			begin
-				if(count==(BaudRateDivisor/2)-1'b1)
+				if(count==(BaudRateDivisor/2)-12'b1)
 					count<=12'b0;
 				else 
-					count<=count+1'b1;
+					count<=count+12'b1;
 			end
 			else 
 				count<=12'b0;
 			end
+
+		
+
 		
 	endmodule
 
