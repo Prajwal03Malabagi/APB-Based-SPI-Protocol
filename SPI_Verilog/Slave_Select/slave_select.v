@@ -12,7 +12,7 @@ module slave_select(pclk, preset_n, mstr, spiswai, spi_mode, send_data, BaudRate
 	assign tip=~ss;
 	assign target_s=16*(BaudRateDivisor/2);
 
-	always@(posedge pclk or negedge preset_n)
+	always@(posedge pclk)
 		begin
 			if(!preset_n)
 				recieve_data<=1'b0;
@@ -21,7 +21,7 @@ module slave_select(pclk, preset_n, mstr, spiswai, spi_mode, send_data, BaudRate
 		end
 	
 
-	always@(posedge pclk or negedge preset_n)
+	always@(posedge pclk)
 		begin
 		if(!preset_n)
 			rcv_s <=1'b0;
@@ -42,7 +42,7 @@ module slave_select(pclk, preset_n, mstr, spiswai, spi_mode, send_data, BaudRate
 		end
 
 
-	always@(posedge pclk or negedge preset_n)
+	always@(posedge pclk)
 		begin
 			if(!preset_n)
 				ss<=1'b1;
@@ -62,7 +62,7 @@ module slave_select(pclk, preset_n, mstr, spiswai, spi_mode, send_data, BaudRate
 					ss<=1'b1;
 		end
 	
-	always@(posedge pclk or negedge preset_n)
+	always@(posedge pclk)
 		begin
 			if(!preset_n)
 				count_s<=16'hffff;
